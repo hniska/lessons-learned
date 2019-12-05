@@ -70,22 +70,34 @@ When a commit queue commit fails for a device the CDB will still have the intend
 
 Snippet from tailf-ncs-plan.yang
 ```yang
-     container commit-queue {
-        presence &quot;The service is being committed through the commit queue.&quot;;
+  grouping plan-data {
+    description
+      "This grouping contains the plan data that can show the
+       progress of a Reactive FASTMAP service. This grouping is optional
+       and should only be used by services i.e lists or presence containers
+       that uses the ncs:servicepoint callback";
+    container plan {
+      config false;
+      tailf:cdb-oper {
+        tailf:persistent true;
+      }
+      uses plan-components;
+      container commit-queue {
+        presence "The service is being committed through the commit queue.";
         list queue-item {
           key id;
           leaf id {
             type uint64;
             description
-              &quot;If the queue item in the commit queue refers to this service
-               this is the queue number.&quot;;
+              "If the queue item in the commit queue refers to this service
+               this is the queue number.";
           }
         }
       }
 ```
-# Generally good practices
+## Generally good practices
 
-## **Makefile**
+### **Makefile**
 
 Make sure your project is reproducible in an easy way. A good start is to use a Makefile that sets up the NSO run-time environment for you project. With that you can easily just clean up your whole run-time and with one command setup everything needed to start your test. For an example Makefile take a look at examples.ncs/service-provider/mpls-vpn/Makefile, there it sets up the netsims, populate them with good startup data and also populate the CDB with some basic info.
 
@@ -312,7 +324,7 @@ cli {
 | post-modification |   | service post-modification... |
 | post-modification | 0.000 | service post-modification ok |
 
-### **XPATH**
+### XPATH
 
 XPath is wonderful but sometimes hard to get right and it can be especially hard to find slow XPath queries in your service. The query runs OK on the small developer network but as soon as its loaded with X thousands of devices the service is slow, which one of the 100 XPath:s is it that is the culprit? Once again progress trace to the rescue. Tracing in debug verbosity XPath evaluation time is included
 
@@ -329,7 +341,9 @@ SUBSYSTEM   DURATION    MESSAGE
 | xpath |   | get\_elem(/devices/device[name=&#39;pe3&#39;]/authgroup) = default |
 | xpath | 0.042 | result: /devices/device[name=&#39;pe3&#39;]/device-type/cli: true |
 
-### Keep an eye on the service back pointer list
+### Service back pointer list
+
+Keep an eye on the service back pointer list
 
 ```
 admin@ncs(config)# show full-configuration devices device ce1 config ios:policy-map | display service-meta-data
