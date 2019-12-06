@@ -2,9 +2,9 @@
 
 This document started out as a lessons learned around layered services architecture (LSA), but early on there was more leassons around things that arenn&#39;t directly related to LSA. This document contains things ranging from from high to low and can&#39;t promise a common thread throughout. Anyway, let&#39;s at least start with discussing LSA.
 
-There are a few different reasons to why one chooses to use a layered service architecture (LSA) with NSO. Might be security boundaries, geographical boundaries, domain boundaries and probably the most common one, scale and performance. There might also be other technical reasons, like that a reload of NSO takes to long compared to the package reload frequency, let's say the release cycle demands a reload every night then a CDB size of 30GB might not work.
+There are a few different reasons to why one chooses to use a layered service architecture (LSA) with NSO. Might be security boundaries, geographical boundaries, domain boundaries and probably the most common one, scale and performance. There might also be other technical reasons, like that a reload of NSO takes to long compared to the wanted package reload frequency, let's say the release cycle demands a reload every night then a CDB size of 30GB might not work.
 
-For the use-cases that are not for scale and performance there aren&#39;t as many things to take into consideration. Important to remember is that an LSA setup that is not running commit queues will be **slower** than a single NSO instance.
+Important to remember is that an LSA setup that is not running commit queues will be **slower** than a single NSO instance. And if the services arent working on a disjunct set of devices (i.e residing on different RFS instances) no speed gains will be had. For the use-cases that are not for scale and performance there aren&#39;t as many things to take into consideration.
 
 Even if services aren&#39;t written with LSA in mind, not all hope is lost. The service can still be split in to a CFS and RFS layer. Not all the benefits of an LSA design will be there but that might be small price to pay compared to doing a total service redesign. For an example on how this can be done, look at examples.ncs/service-provider/mpls-vpn-layered-service-architecture.
 
@@ -55,7 +55,23 @@ CPU and time intensive things should be run asynchronously in a reactive FASTMAP
 
 Unless the service code is really slow the slowest part of a commit will be the device. So, before LSA is considered commit queues should be enabled. Enabling commit-queues often yields such an increase in transactional throughput that LSA is not needed or its introduction can be postponed.
 
-Without commit queues a layered service architecture will not give any speed gains. Commit speed will be the slowest device in the commit, it will even slower in an LSA setup than in a single NSO instance as latency within the LSA environment is higher than within a single NSO node. **Commit queues and a few gotchas**
+Without commit queues a layered service architecture will not give any speed gains. Commit speed will be the slowest device in the commit, it will even slower in an LSA setup than in a single NSO instance as latency within the LSA environment is higher than within a single NSO node.
+
+When is it recommended to turn on commit queues?
+
+The default transaction model in NSO locks the database from commit time till the slowest device in the transaction has accepted the configuration.
+
+![normal-commit](/media/commit.jpg)
+
+Commit queues loosen up the default atomicity of the transaction, the lock is released already when the configuration is saved in the CDB.
+
+![queue-commit](/media/queuecommit.jpg)
+
+Lets say a non commit-queue commit takes 10 seconds, if the expected peak throughput is 120 commits an hour, then roughly each commit has about 30 seconds to complete without interfering with other transactions. That gives 20 seconds to spare and most probably commit-queues is not necessary. Interfering meaning that the next transaction have to wait till the previous one has completed.
+
+But let's say the peak is 360 transactions an hour, that would give each transaction exactly 10 seconds to complete without interfering with the next one and that is if they are absolutely evenly distributed. In this case commit-queues is a must. How many transactions can a single NSO handle with the commit-queue numbers above (600ms CDB lock time), in theory 6000 transactions an hour, of course this does not translate directly to any real world scenarios but at least gives a hint to how to think about commit-queues or not.
+
+#### Commit queues and a few gotchas
 
 - Think about failure handling
   - Remember that when a commit fails, NSO will be out of sync with the device
@@ -63,6 +79,7 @@ Without commit queues a layered service architecture will not give any speed gai
   - Northbound system would need to check the returned text too.
 - Overlapping requests
   - If a commit queue item sets leaf X and a new commit queue item comes right after and sets X, the second queue item will fail with an overlapping request error.
+
 
 ### Reactive FASTMAP and commit queues
 
