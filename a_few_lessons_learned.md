@@ -2,13 +2,13 @@
 
 This document started out as a lessons learned around layered services architecture (LSA), but early on there was more leassons around things that arenn&#39;t directly related to LSA. This document contains things ranging from from high to low and can&#39;t promise a common thread throughout. Anyway, let&#39;s at least start with discussing LSA.
 
-There are a few different reasons to why one chooses to use a layered service architecture (LSA) with NSO. Might be security boundaries, geographical boundaries, domain boundaries and probably the most common one, scale and performance.
+There are a few different reasons to why one chooses to use a layered service architecture (LSA) with NSO. Might be security boundaries, geographical boundaries, domain boundaries and probably the most common one, scale and performance. There might also be other technical reasons, like that a reload of NSO takes to long compared to the package reload frequency, let's say the release cycle demands a reload every night then a CDB size of 30GB might not work.
 
-For all the use-cases that are not for scale and performance there aren&#39;t as many things to take into consideration as there is when it comes to scale and performance. Important to remember is that an LSA setup that is not running commit queues will be **slower** than a single NSO instance.
+For the use-cases that are not for scale and performance there aren&#39;t as many things to take into consideration. Important to remember is that an LSA setup that is not running commit queues will be **slower** than a single NSO instance.
 
-Remember that even if services aren&#39;t written with LSA in mind, not all hope is lost. The service can still be split in to a CFS and RFS layer. Not all the benefits of an LSA design will be there but that might be small price to pay compared to doing a total service redesign. For an example on how this can be done, look at examples.ncs/service-provider/mpls-vpn-layered-service-architecture.
+Even if services aren&#39;t written with LSA in mind, not all hope is lost. The service can still be split in to a CFS and RFS layer. Not all the benefits of an LSA design will be there but that might be small price to pay compared to doing a total service redesign. For an example on how this can be done, look at examples.ncs/service-provider/mpls-vpn-layered-service-architecture.
 
-## A decent LSA ready design
+## A decent LSA "ready" design
 
 So, what do we mean with LSA ready? it&#39;s a design that even though you in the beginning only run it on a single NSO instance it is ready to be separated in to a CFS and an RFS layer.
 
@@ -424,4 +424,8 @@ sync-result {
     device ex1
     result true
 }
-``
+```
+
+### Alarms
+
+In a production NSO system its important to keep an eye on the NSO alarms. NSO generates alarms for serious problems that must be remedied. Alarms are available over all north-bound interfaces and they exist at the path /alarms.
