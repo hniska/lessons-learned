@@ -69,7 +69,7 @@ Commit queues loosen up the default atomicity of the transaction, the lock is re
 
 Lets say a non commit-queue commit takes 10 seconds, if the expected peak throughput is 120 commits an hour, then roughly each commit has about 30 seconds to complete without interfering with other transactions. That gives 20 seconds to spare and most probably commit-queues is not necessary. Interfering meaning that the next transaction have to wait till the previous one has completed.
 
-But let's say the peak is 360 transactions an hour, that would give each transaction exactly 10 seconds to complete without interfering with the next one and that is if they are absolutely evenly distributed. In this case commit-queues is a must. How many transactions can a single NSO handle with the commit-queue numbers above (600ms CDB lock time), in theory 6000 transactions an hour, of course this does not translate directly to any real world scenarios but at least gives a hint to how to think about commit-queues or not.
+But let's say the peak is 360 transactions an hour, that would give each transaction exactly 10 seconds to complete without interfering with the next one and that is if they are absolutely evenly distributed. In this case commit-queues is a must. How many transactions can a single NSO handle with the commit-queue numbers above (600ms CDB lock time), in theory 6000 transactions an hour (in to NSO, not to the devices) of course this does not translate directly to any real world scenarios but at least gives a hint to how to think about commit-queues or not.
 
 #### Commit queues and a few gotchas
 
