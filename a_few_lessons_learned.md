@@ -376,7 +376,7 @@ devices device ce1
     shape average 6000000
 ```
 
-If that list gets to big it will also slow down the service creation. Try to understand if this can be changed, if all 1000 service instance creates this value do, we really expect that to be deleted when all service instances are deleted? Will they ever be deleted? If not, why not just make sure they are there by setting them in a day0 service that will be applied once on each device. Another approach is to set it in the service pre\_modification.
+If that list gets too big it will also slow down the service creation. Try to understand if this can be changed, if all 1000 service instance creates this value do, we really expect that to be deleted when all service instances are deleted? Will they ever be deleted? If not, why not just make sure they are there by setting them in a day0 service that will be applied once on each device. Another approach is to set it in the service pre\_modification.
 
 A few nonscientific numbers (tested on small laptop with rollbacks etc) arounds this.
 
