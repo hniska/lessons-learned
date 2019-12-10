@@ -415,9 +415,9 @@ Remember that if the CDB is locked when you call NSO your commit (and some actio
 
 Nice to know commit flags for LSA
 
-- commit lso no-networking
+- commit lsa no-networking
   - Commits down to the RFS layer but not to devices
-- commit no-lso no-networking
+- commit no-lsa no-networking
   - Commits stays in the CFS layer
 
 ### Sync-from is expensive
