@@ -303,16 +303,16 @@ admin@ncs(config)# path to the service get-modifications reverse
 
 There is quite a few things that gets done at the "saving FASTMAP reverse diff-set" stage. Iterate through all the changes in the create(), converts it to a format that survives upgrades, generates the forward diff if that is enabled and a few other things.
 
-To see the forward diffset the get-modifications action is used
+To see the forward diffset use the get-modifications action
 
 ```
-request reverse a get-modifications
+admin@ncs% request my-service ikea get-modifications
 ```
 
-Depending on the configuration some percentages (5-20%) can be saved by disabling the forward diffset
+Depending on the configuration some percentages (5-20%) can be shaved off by disabling the forward diffset
 
 ```
-set services global-settings collect-forward-diff false
+admin@ncs% set services global-settings collect-forward-diff false
 ``
 
 What can be done if you end up here? One thing could be to split the service to a stacked service so that each policy-map is a child service. Then when adding a new instance of a policy-map NSO doesn&#39;t need to run the full reverse diff-set
