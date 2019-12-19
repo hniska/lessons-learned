@@ -306,7 +306,7 @@ There is quite a few things that gets done at the "saving FASTMAP reverse diff-s
 To see the forward diffset use the get-modifications action
 
 ```
-admin@ncs% request my-service ikea get-modifications
+admin@ncs(config)# path to the service get-modifications
 ```
 
 Depending on the configuration some percentages (5-20%) can be shaved off by disabling the forward diffset
