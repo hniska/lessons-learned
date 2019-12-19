@@ -1,6 +1,6 @@
 # A few lessons learned
 
-This document started out as a lessons learned around layered services architecture (LSA), but early on there was more leassons around things that arenn&#39;t directly related to LSA. This document contains things ranging from from high to low and can&#39;t promise a common thread throughout. Anyway, let&#39;s at least start with discussing LSA.
+This document started out as a lessons learned around layered services architecture (LSA), but early on there was more lessons around things that aren&#39;t directly related to LSA. This document contains things ranging from high to low and can&#39;t promise a common thread throughout. Anyway, let&#39;s at least start with discussing LSA.
 
 There are a few different reasons to why one chooses to use a layered service architecture (LSA) with NSO. Might be security boundaries, geographical boundaries, domain boundaries and probably the most common one, scale and performance. There might also be other technical reasons, like that a reload of NSO takes to long compared to the wanted package reload frequency, let's say the release cycle demands a reload every night then a CDB size of 30GB might not work.
 
@@ -20,7 +20,7 @@ That way you can later split the service where the lowest service is transferred
 
 ![l3vpn-lsa](/media/image2.png)
 
-Lowest service layer (endpoint) writes to the device before moving to LSA. That layer is then moved to the RFS node and the l3vpn layer then writes to
+Lowest service layer (endpoint) writes to the device. That layer is then moved to the RFS node and the l3vpn layer then writes to
 
 ```
 /devices/device/RFS-node/config/dRFS/l3vpn-endpoint
@@ -30,9 +30,9 @@ dRFS = device RFS. A list of the devices in the RFS layer under which the servic
 
 The endpoint and the l3vpn-endpoint look the same so there are hardly any changes to the top l3vpn service when the endpoint is moved to the RFS layer.
 
-If it&#39;s desirable to be able to move devices between RFS devices in the future, there are a few more things to consider.
+If it&#39;s desirable to be able to move devices between RFS nodes in the future, there are a few more things to consider.
 
-- No allocations in the RFS layer
+- Don’t do allocations in the RFS layer
   - A lot more complex to move this together with the configs, usually allocations data is stored in a shared part of the NSO tree.
 - Only one device per service instance in the RFS layer. Even if your RFS service is stacked, you can/should only have one device top to bottom (in the RFS layer).
 - Moving a dRFS instance means moving all services and if the child services touch multiple devices it can be come arbitrary complex.
@@ -41,7 +41,7 @@ There is a good example of this in chapter 2 in the NSO LSA guide.
 
 ## All LSA setups
 
-### No reading from CFS by the RFS layer
+### Don’t read from CFS by the RFS layer
 
 If the data is needed in a lower layer pass that data downstream. Otherwise it&#39;s just another thing to keep in sync with your code instead of letting NSO do what its good at.
 
@@ -55,7 +55,7 @@ CPU and time intensive things should be run asynchronously in a reactive FASTMAP
 
 Unless the service code is really slow the slowest part of a commit will be the device. So, before LSA is considered commit queues should be enabled. Enabling commit-queues often yields such an increase in transactional throughput that LSA is not needed or its introduction can be postponed.
 
-Without commit queues a layered service architecture will not give any speed gains. Commit speed will be the slowest device in the commit, it will even slower in an LSA setup than in a single NSO instance as latency within the LSA environment is higher than within a single NSO node.
+Without commit queues a layered service architecture will not give any speed gains. Commit speed will be the slowest device in the commit, it will be even slower in an LSA setup than in a single NSO instance because latency within the LSA environment is higher than within a single NSO node.
 
 When is it recommended to turn on commit queues?
 
@@ -67,9 +67,9 @@ Commit queues loosen up the default atomicity of the transaction, the lock is re
 
 ![queue-commit](/media/queuecommit.jpg)
 
-Lets say a non commit-queue commit takes 10 seconds, if the expected peak throughput is 120 commits an hour, then roughly each commit has about 30 seconds to complete without interfering with other transactions. That gives 20 seconds to spare and most probably commit-queues is not necessary. Interfering meaning that the next transaction have to wait till the previous one has completed.
+Lets say a non commit-queue commit takes 10 seconds, if the expected peak throughput is 120 transactions an hour, then roughly each commit has about 30 seconds to complete without interfering with other transactions. That gives 20 seconds to spare and most probably commit-queues is not necessary. Interfering meaning that the next transaction has to wait till the previous one has completed.
 
-But let's say the peak is 360 transactions an hour, that would give each transaction exactly 10 seconds to complete without interfering with the next one and that is if they are absolutely evenly distributed. In this case commit-queues is a must. How many transactions can a single NSO handle with the commit-queue numbers above (600ms CDB lock time), in theory 6000 transactions an hour (in to NSO, not to the devices) of course this does not translate directly to any real world scenarios but at least gives a hint to how to think about commit-queues or not.
+But let's say the peak is 360 transactions an hour, that would give each transaction exactly 10 seconds to complete without interfering with the next one and that is if they are absolutely evenly distributed. In this case commit-queues is a must. How many transactions can a single NSO handle with the commit-queue numbers above (600ms CDB lock time), in theory 6000 transactions an hour (in to NSO, not to the devices) of course this does not translate directly to any real world scenarios but at least gives a hint to whether you should think about commit-queues or not.
 
 #### Commit queues and a few gotchas
 
@@ -83,7 +83,7 @@ But let's say the peak is 360 transactions an hour, that would give each transac
 
 ### Reactive FASTMAP and commit queues
 
-When a commit queue commit fails for a device the CDB will still have the intended configuration and be out of sync with the device. That poses a problem if your reactive FASTMAP loop has &quot;config on device&quot; as a criterion for progressing. If the service has such a criterion the progress subscriber (will be hard with kickers) will have to look at the service plan commit-queue list. To learn more about service plans check the &quot;Progress reporting using plan-data&quot; chapter in the development guide.
+When a commit queue commit fails for a device the CDB will still have the intended configuration and be out of sync with the device. That poses a problem if your reactive FASTMAP loop has &quot;config on device&quot; as a criterion for progressing. If the service has such a criterion the progress subscriber (or kicker but the kicker monitor XPATH might get pretty complex) will have to look at the service plan commit-queue list. To learn more about service plans check the &quot;Progress reporting using plan-data&quot; chapter in the development guide.
 
 Snippet from tailf-ncs-plan.yang
 ```yang
@@ -116,7 +116,7 @@ Snippet from tailf-ncs-plan.yang
 
 ### **Makefile**
 
-Make sure your project is reproducible in an easy way. A good start is to use a Makefile that sets up the NSO run-time environment for you project. With that you can easily just clean up your whole run-time and with one command setup everything needed to start your test. For an example Makefile take a look at examples.ncs/service-provider/mpls-vpn/Makefile, there it sets up the netsims, populate them with good startup data and also populate the CDB with some basic info.
+Make sure your project is reproducible in an easy way. A good start is to use a Makefile that sets up the NSO run-time environment for you project. With that you can easily just clean up your whole run-time and with one command setup everything needed to start your test. For an example Makefile take a look at examples.ncs/service-provider/mpls-vpn/Makefile, there it sets up the netsims, populates them with good startup data and also populates the CDB with some basic info.
 
 This will also make it easier when having to show TAC on how to reproduce a bug.
 
@@ -135,7 +135,7 @@ There are many reasons for why Docker and containers in general might be good fo
   - you test the combination of NSO version X and version Y of your packages
     - think of it as a &quot;version set&quot;
   - the same version set that is tested in CI is deployed in production
-    - guarantees you tested same thing you deploy
+    - guarantees you tested the same thing that you deploy
   - conversely, using other distribution methods, you increase the risk of testing one thing and ending up deploying something else - i.e. you didn&#39;t really test what you use in production
 - having NSO in a container makes it easy to start
   - simple to test
@@ -227,7 +227,7 @@ TIMESTAMP   TID SESSION ID  CONTEXT SUBSYSTEM   PHASE   SERVICE SERVICE PHASE   
 
 ### Large lists in services
 
-A quite common problem is that the service creation time in the beginning is within reason but when you get up into higher number of list entries in the service the execution time starts to get to unacceptable number. Here is an example, you have a service that creates policy-maps, when it creates just one policy-map it&#39;s quick and responsive
+A quite common problem is that the service creation time in the beginning is within reason but when you get up into a higher number of list entries in the service the execution time starts to get to an unacceptable number. Here is an example, you have a service that creates policy-maps, when it creates just one policy-map it&#39;s quick and responsive
 
 ![policy-service](/media/image4.png)
 
@@ -295,11 +295,25 @@ Take a look in the progress trace
 | post-modification |   | service post-modification... |
 | post-modification | 0.000 | service post-modification ok |
 
-The service spent 3.835 seconds just with the reverse diff-set. What is the reverse diff-set? It is what NSO uses to undo the service, it&#39;s the reverse of what the service created. To see the reverse diff-set for a service use the get-modifications reverse command
+The service spent 3.835 seconds just with the reverse diff-set. What is the reverse diff-set? It is what NSO uses to undo the service, it&#39;s the reverse of what the service created. To see the reverse diff-set for a service use the get-modifications reverse command.
 
 ```
 admin@ncs(config)# path to the service get-modifications reverse
 ```
+
+There is quite a few things that gets done at the "saving FASTMAP reverse diff-set" stage. Iterate through all the changes in the create(), converts it to a format that survives upgrades, generates the forward diff if that is enabled and a few other things.
+
+To see the forward diffset the get-modifications action is used
+
+```
+request reverse a get-modifications
+```
+
+Depending on the configuration some percentages (5-20%) can be saved by disabling the forward diffset
+
+```
+set services global-settings collect-forward-diff false
+``
 
 What can be done if you end up here? One thing could be to split the service to a stacked service so that each policy-map is a child service. Then when adding a new instance of a policy-map NSO doesn&#39;t need to run the full reverse diff-set
 
