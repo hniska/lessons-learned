@@ -35,7 +35,7 @@ If it&#39;s desirable to be able to move devices between RFS nodes in the future
 - Don’t do allocations in the RFS layer
   - A lot more complex to move this together with the configs, usually allocations data is stored in a shared part of the NSO tree.
 - Only one device per service instance in the RFS layer. Even if your RFS service is stacked, you can/should only have one device top to bottom (in the RFS layer).
-- Moving a dRFS instance means moving all services and if the child services touch multiple devices it can be come arbitrary complex.
+- Moving a dRFS instance means moving all services and if the child services touch multiple devices it can become arbitrary complex.
 
 There is a good example of this in chapter 2 in the NSO LSA guide.
 
@@ -313,7 +313,7 @@ Depending on the configuration some percentages (5-20%) can be shaved off by dis
 
 ```
 admin@ncs% set services global-settings collect-forward-diff false
-``
+```
 
 What can be done if you end up here? One thing could be to split the service to a stacked service so that each policy-map is a child service. Then when adding a new instance of a policy-map NSO doesn&#39;t need to run the full reverse diff-set
 
@@ -357,7 +357,7 @@ cli {
 
 ### XPATH
 
-XPath is wonderful but sometimes hard to get right and it can be especially hard to find slow XPath queries in your service. The query runs OK on the small developer network but as soon as its loaded with X thousands of devices the service is slow, which one of the 100 XPath:s is it that is the culprit? Once again progress trace to the rescue. Tracing in debug verbosity XPath evaluation time is included
+XPath is wonderful but sometimes hard to get right and it can be especially hard to find slow XPath queries in your service. The query runs OK on the small developer network but as soon as its loaded with X thousands of devices the service is slow, which one of the 100 XPath:s is the culprit? Once again progress trace to the rescue. Tracing in debug verbosity XPath evaluation time is included
 
 SUBSYSTEM   DURATION    MESSAGE
 
@@ -390,9 +390,9 @@ devices device ce1
     shape average 6000000
 ```
 
-If that list gets too big it will also slow down the service creation. Try to understand if this can be changed, if all 1000 service instance creates this value do, we really expect that to be deleted when all service instances are deleted? Will they ever be deleted? If not, why not just make sure they are there by setting them in a day0 service that will be applied once on each device. Another approach is to set it in the service pre\_modification.
+If that list gets too big it will also slow down the service creation. Try to understand if this can be changed, if all 1000 service instance creates this value, do we really expect that to be deleted when all service instances are deleted? Will they ever be deleted? If not, why not just make sure they are there by setting them in a day0 service that will be applied once on each device. Another approach is to set it in the service pre\_modification.
 
-A few nonscientific numbers (tested on small laptop with rollbacks etc) arounds this.
+A few nonscientific numbers (tested on small laptop with rollbacks etc):
 
 A specific service type always creates:
 ```
@@ -402,7 +402,7 @@ config
   ios:router bgp 64512
 ```
 
-If that list entry (bgp 64512) is created **without** back pointers
+List entry (bgp 64512) created **without** back pointers
 
 | Nr of service instances | Seconds |
 | --- | --- |
@@ -410,7 +410,7 @@ If that list entry (bgp 64512) is created **without** back pointers
 | 5000 | 69 |
 | 10000 | 154 |
 
-And the same but **with** back pointers
+List entry (bgp 64512) created **with** back pointers
 
 | Nr of services (also nr of back pointers) | Seconds |
 | --- | --- |
