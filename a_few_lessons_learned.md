@@ -154,7 +154,7 @@ Here you can find a good example on how to work with Docker containers https://g
 
 ### Execution time
 
-Test with data that is close to real world data, if a list will have 1000 entries in the production system make sure you test with more than that. Keep an eye on the execution time and try keeping the execution time to less than one second or something like 1ms per config line. Important here is commit time without the network as that is the part that we have power over. Of course, some service will break that, the important thing is that it&#39;s a known fact and doesn&#39;t show up as Jack in the box in production.
+Test with data that is close to real world data, if a list will have 1000 entries in the production system make sure you test with more than that. Keep an eye on the execution time and try keeping the execution time to something like 1ms per config line, of course dependent on the hardware you run NSO on but at least see it as something to aim for. Important here is commit time without the network as that is the part that we have power over. Of course, some service will break that, the important thing is that it&#39;s a known fact and doesn&#39;t show up as Jack in the box in production.
 
 ![transaction](/media/image3.png)
 
